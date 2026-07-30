@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قائمة استراحات الجبل الأخضر</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { max-width: 900px; margin: 0 auto; }
+.header {
+  background: #1a5c2a;
+  color: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.header h1 { font-size: 28px; margin-bottom: 8px; }
+.header p { font-size: 15px; opacity: 0.9; }
+.stats {
+  display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;
+  margin-top: 15px; font-size: 14px;
+}
+.stats span { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; }
+.search-box {
+  position: relative; margin-bottom: 25px;
+}
+.search-box input {
+  width: 100%; padding: 16px 20px; border: 2px solid #e0e0e0;
+  border-radius: 12px; font-size: 16px; outline: none;
+  background: #fff; transition: 0.3s;
+}
+.search-box input:focus { border-color: #1a5c2a; box-shadow: 0 0 0 3px rgba(26,92,42,0.1); }
+.search-box input::placeholder { color: #999; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.card {
+  background: #fff; border-radius: 12px; padding: 16px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: 0.3s;
+  cursor: pointer; border-right: 4px solid #1a5c2a;
+}
+.card:hover { transform: translateX(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.card .num {
+  background: #1a5c2a; color: #fff; width: 32px; height: 32px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: bold; flex-shrink: 0;
+}
+.card .info { flex: 1; margin: 0 12px; }
+.card .name { font-size: 16px; font-weight: 600; color: #222; }
+.card .phones {
+  font-size: 13px; color: #1a5c2a; direction: ltr; display: inline-block;
+}
+.card .phones a {
+  color: #1a5c2a; text-decoration: none; font-weight: 500; margin: 0 2px;
+}
+.card .phones a:hover { text-decoration: underline; }
+.card .actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.map-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #e8f5e9; color: #1a5c2a; border: 1px solid #a5d6a7;
+  padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 12px; text-decoration: none; transition: 0.2s;
+  white-space: nowrap;
+}
+.map-btn:hover { background: #1a5c2a; color: #fff; }
+.map-btn.verified { background: #1a5c2a; color: #fff; border-color: #1a5c2a; }
+.map-btn.verified:hover { background: #13421e; }
+.no-results {
+  text-align: center; padding: 50px 20px; color: #666;
+  font-size: 18px; display: none;
+}
+.duplicate-badge {
+  display: inline-block; background: #fff3cd; color: #856404;
+  font-size: 11px; padding: 1px 8px; border-radius: 10px; margin-right: 6px;
+}
+.footer {
+  text-align: center; padding: 30px; color: #888; font-size: 13px;
+}
+.copy-btn {
+  background: #1a5c2a; color: #fff; border: none; padding: 6px 14px;
+  border-radius: 8px; cursor: pointer; font-size: 12px; margin-right: 8px;
+}
+.copy-btn:hover { background: #13421e; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🏕️ قائمة استراحات الجبل الأخضر</h1>
+    <p>قائمة محدثة بأسماء الاستراحات وأرقام التواصل</p>
+    <div class="stats">
+      <span id="totalCount">0</span>
+    </div>
+  </div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="ابحث بالاسم أو رقم الهاتف...">
+  </div>
+  <div class="list" id="listContainer"></div>
+  <div class="no-results" id="noResults">لا توجد نتائج للبحث</div>
+  <div class="footer">تم التجميع بواسطة فريق العمل</div>
+</div>
+<script>
+  function mapsUrl(name) {
+    return 'https://www.google.com/maps/search/' + encodeURIComponent(name + ' الجبل الأخضر عمان');
+  }
+  const data = [
+  {name:"استراحة الشرفة الملكيه", phones:["96999739"]},
+  {name:"استراحه اصاله", phones:["94962772"]},
+  {name:"استراحة المُسافِر", phones:["99767232"]},
+  {name:"استراحة الرئام", phones:["91119782"], dup:"76"},
+  {name:"استراحة المروج 1", phones:["92940471"]},
+  {name:"استراحة القمة 1", phones:["95294222"], dup:"75"},
+  {name:"شاليه الشروق", phones:["94050805"]},
+  {name:"استراحة الزهور", phones:["97156870"]},
+  {name:"إستراحة الريف", phones:["99737036"]},
+  {name:"استراحة بيت الحصن", phones:["71561162"]},
+  {name:"أستراحة روضة الجبل الاخضر", phones:["95888000"]},
+  {name:"استراحة بيت السلام", phones:["97031727"]},
+  {name:"استراحه الحيل 1", phones:["99130176"]},
+  {name:"استراحه رأس الضباب", phones:["99616193"]},
+  {name:"إستراحة صفوان", phones:["99371002"]},
+  {name:"اطلاله الجبل", phones:["99253745"]},
+  {name:"استراحة دار الكرم للضيافة", phones:["93540030"]},
+  {name:"فيلا الغروب", phones:["99058470"]},
+  {name:"شاليهات روز", phones:["93335686","99360225"]},
+  {name:"the peak villa", phones:["71772227"]},
+  {name:"لؤلؤة الجبل الأخضر", phones:["92390070"]},
+  {name:"إطلالة القمة الخضراء", phones:["92356672"], dup:"81"},
+  {name:"استراحة القوافل", phones:["96408688","92112575"]},
+  {name:"فله الرمان", phones:["95402227"], dup:"96"},
+  {name:"حصن الجبل الاخضر", phones:["94822788"]},
+  {name:"إستراحة البهجة", phones:["96256800"]},
+  {name:"إستراحة قرن الخضر", phones:["95742362"]},
+  {name:"فيلا المرجان المضيء", phones:["95772557"]},
+  {name:"فيلا دانة الجبل", phones:[]},
+  {name:"شقق السعادة", phones:["99219548"]},
+  {name:"استراحة الانشراح", phones:["91760455"], dup:"93"},
+  {name:"درج الياسمين", phones:["95872442"]},
+  {name:"استراحة بيت المعمورة", phones:["92300517"]},
+  {name:"أستراحة الجوهرة", phones:["91449757"], dup:"101"},
+  {name:"شقق الفلاح", phones:["99435475"]},
+  {name:"استراحه الحيل 2", phones:["93319336"]},
+  {name:"بيت الحجر للضيافة", phones:["99316398"], dup:"65"},
+  {name:"بيت الشرفة", phones:["99063346"]},
+  {name:"الجبل الاشم", phones:["95599522"], dup:"84"},
+  {name:"بيت الأنس", phones:["95713521"], dup:"74"},
+  {name:"بيت تل الزيتون", phones:["93672934"]},
+  {name:"استراحة الراحه", phones:["99666846"]},
+  {name:"استراحة الرحال", phones:["99611823"]},
+  {name:"إستراحة سلاسل الجبل الأخضر", phones:["96663204"]},
+  {name:"إستراحة العز", phones:["91200887"]},
+  {name:"استراحة المروج 2", phones:["94898983"]},
+  {name:"شاليهات الغيوم", phones:["92122269"]},
+  {name:"استراحة الضباب", phones:["96984869"]},
+  {name:"استراحة العلعلان", phones:["99008222"]},
+  {name:"استراحة ارض الرمان بالجبل الاخضر", phones:["96720407"]},
+  {name:"استراحة رياض الجبل الاخضر", phones:["95995232"]},
+  {name:"بيت القرية", phones:["92373163"]},
+  {name:"الملحق التراثي", phones:["96007646"]},
+  {name:"بيت زهور عمان - ROSES HOUSE OMAN", phones:["93203006"]},
+  {name:"شاليه الزيتون", phones:["92254198","97771741"], dup:"99"},
+  {name:"جوهرة الجبل الاخضر", phones:["92124741"]},
+  {name:"استراحة بهجة الجبل الأخضر", phones:["99382674"]},
+  {name:"توين فيلا - بيت المنى", phones:["95290051"]},
+  {name:"شقق البسمة", phones:["99800260"]},
+  {name:"إستراحة سبأ", phones:["99800903"]},
+  {name:"الاستراحة الملكية", phones:["91770883"]},
+  {name:"استراحة قمة الجبل 1", phones:["94235066"]},
+  {name:"فيلا الجبل الاخضر", phones:[]},
+  {name:"نزل فنار الجبل التراثي", phones:["92336648"]},
+  {name:"بيت الحجر للضيافة (مكرر)", phones:["99316398"], dup:"37"},
+  {name:"استراحه بلو هاوس", phones:["93388191"]},
+  {name:"استراحه امير الجبل", phones:["96181633"]},
+  {name:"استراحه الاثير", phones:["97560373"]},
+  {name:"استراحة القمر", phones:["77483782"]},
+  {name:"استراحة بيت الجود", phones:["99465788"]},
+  {name:"شقق بيت البريج", phones:["94000142","98836556"]},
+  {name:"جلونار موتيل للشقق", phones:["98866755"]},
+  {name:"استراحه بيت العز", phones:["95275589"]},
+  {name:"بيت الأنس (مكرر)", phones:["95713521"], dup:"40"},
+  {name:"استراحة القمة 2", phones:["95294222"], dup:"6"},
+  {name:"الرئام (مكرر)", phones:["91119782"], dup:"4"},
+  {name:"شقق وفلل", phones:["99045920"]},
+  {name:"استراحة غزال", phones:["71173197"]},
+  {name:"بيت البستان", phones:["97317238"]},
+  {name:"استراحه بيت العقد", phones:["92997123"]},
+  {name:"شاليه أطلالة القمر", phones:["92356672"], dup:"22"},
+  {name:"كرفان ريف الجبل", phones:["95917177","95890517"]},
+  {name:"استراحه ربوه", phones:["78834886"]},
+  {name:"استراحه الجبل الاشم (مكرر)", phones:["95599522"], dup:"39"},
+  {name:"استراحة الشيف", phones:["92289313"]},
+  {name:"استراحه الزهوز الشيف", phones:["91155035","97156870"]},
+  {name:"الملحق الجديد", phones:["92606548"]},
+  {name:"استراحة ارض الزيتون", phones:["92599123"]},
+  {name:"بيت للاجار", phones:["96008155"]},
+  {name:"استراحه rose", phones:["99557939"]},
+  {name:"شقق", phones:["96660801"]},
+  {name:"مجموعة سلاسل الجبل الأخضر للاستراحات والشقق الفندقيه", phones:["99472516","99045920"]},
+  {name:"استراحة الانشراح (مكرر)", phones:["91760455"], dup:"31"},
+  {name:"أستراحة أوليفيا", phones:["99273344"]},
+  {name:"استراحة نسائم الجبل الاخضر", phones:["96919221"]},
+  {name:"فلل الرمان بالجبل الاخضر", phones:["95402227"], dup:"24"},
+  {name:"بيت الفياضية", phones:["99414736"]},
+  {name:"استراحة قمة الجبل 2", phones:["94235067"]},
+  {name:"شاليه الزيتون (مكرر)", phones:["92254198"], dup:"55"},
+  {name:"مرتفعات صوير", phones:["97405114"]},
+  {name:"أستراحة الجوهرة (مكرر)", phones:["91449757"], dup:"34"},
+  {name:"إستراحة الريم", phones:["91238535"]}
+];
+
+const total = data.length;
+document.getElementById('totalCount').textContent = `إجمالي ${total} استراحة وبيت ضيافة`;
+
+function render(items) {
+  const container = document.getElementById('listContainer');
+  const noResults = document.getElementById('noResults');
+  container.innerHTML = '';
+  if (items.length === 0) {
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+  items.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = data.indexOf(item) + 1;
+    card.appendChild(num);
+    const info = document.createElement('div');
+    info.className = 'info';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'name';
+    nameSpan.textContent = item.name;
+    info.appendChild(nameSpan);
+    if (item.dup) {
+      const badge = document.createElement('span');
+      badge.className = 'duplicate-badge';
+      badge.textContent = 'مكرر رقم ' + item.dup;
+      info.appendChild(badge);
+    }
+      card.appendChild(info);
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const mapLink = document.createElement('a');
+    mapLink.className = 'map-btn' + (item.map ? ' verified' : '');
+    mapLink.href = item.map || mapsUrl(item.name);
+    mapLink.target = '_blank';
+    mapLink.rel = 'noopener';
+    mapLink.textContent = item.map ? '📍 موقع مؤكد' : '🗺️ بحث في الخريطة';
+    actions.appendChild(mapLink);
+    if (item.phones.length > 0) {
+      const phonesDiv = document.createElement('div');
+      phonesDiv.className = 'phones';
+      item.phones.forEach((p, i) => {
+        const a = document.createElement('a');
+        a.href = 'tel:' + p;
+        a.textContent = p;
+        phonesDiv.appendChild(a);
+        if (i < item.phones.length - 1) {
+          phonesDiv.appendChild(document.createTextNode(' - '));
+        }
+      });
+      actions.appendChild(phonesDiv);
+    }
+    card.appendChild(actions);
+    container.appendChild(card);
+  });
+}
+
+render(data);
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  if (!q) { render(data); return; }
+  const filtered = data.filter(item => {
+    if (item.name.toLowerCase().includes(q)) return true;
+    for (const p of item.phones) {
+      if (p.includes(q)) return true;
+    }
+    return false;
+  });
+  render(filtered);
+});
+</script>
+</body>
+</html>
